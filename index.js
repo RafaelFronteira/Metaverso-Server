@@ -7,13 +7,21 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+// const io = new Server(server, {
+//     cors: {
+//       origin: "https://rafaelfronteira.github.io",
+//       methods: ["GET", "POST"]
+
+//     }
+// });
+
+
 const io = new Server(server, {
     cors: {
-      origin: "https://rafaelfronteira.github.io",
-      methods: ["GET", "POST"]
-
+      origin: "*",
     }
 });
+
 
 app.use(cors());
 
@@ -21,7 +29,10 @@ let players = [];
 
 
 io.on('connection', (socket) => {
+    console.log('alguem conectou')
+
     socket.on('add', (player) => {
+        console.log('Novo jogador adicionado: ', player.name)
         socket.emit('newPlayer', { player, players: players.filter(p => p.id !== player.id) });
         socket.broadcast.emit('somePlayerAdded', player);
         players.push(player);
@@ -38,9 +49,15 @@ io.on('connection', (socket) => {
     });
 
     socket.on('remove', (player) => {
+        console.log('Player removed: ', player)
         players = players.filter(p => p.id !== player);
         socket.broadcast.emit('somePlayerRemoved', player);
-    })
+    });
+
+
+    socket.on('disconnect', () => {
+        console.log('alguem saiu')
+    });
 });
 
 server.listen(process.env.PORT || 3000, () => {
